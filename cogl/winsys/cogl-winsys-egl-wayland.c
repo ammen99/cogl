@@ -279,12 +279,12 @@ _cogl_winsys_renderer_connect (CoglRenderer *renderer,
    * compostor and shell object.
    */
   wl_display_roundtrip (wayland_renderer->wayland_display);
-  if (!wayland_renderer->wayland_compositor || !wayland_renderer->wayland_shell)
+  if (!wayland_renderer->wayland_compositor)
     {
       _cogl_set_error (error,
                        COGL_WINSYS_ERROR,
                        COGL_WINSYS_ERROR_INIT,
-                       "Unable to find wl_compositor or wl_shell");
+                       "Unable to find wl_compositor");
       goto error;
     }
 
@@ -519,9 +519,19 @@ _cogl_winsys_egl_onscreen_init (CoglOnscreen *onscreen,
                             NULL);
 
   if (!onscreen->foreign_surface)
+  {
+    if (!wayland_renderer->wayland_shell)
+      {
+        _cogl_set_error (error, COGL_WINSYS_ERROR,
+            COGL_WINSYS_ERROR_CREATE_ONSCREEN,
+            "No foreign surface, and wl_shell unsupported by the compositor");
+        return FALSE;
+      }
+
     wayland_onscreen->wayland_shell_surface =
       wl_shell_get_shell_surface (wayland_renderer->wayland_shell,
                                   wayland_onscreen->wayland_surface);
+  }
 
   return TRUE;
 }
